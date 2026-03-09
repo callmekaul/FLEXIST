@@ -1,4 +1,6 @@
-from datetime import datetime, timedelta
+import uuid
+from collections import defaultdict
+from datetime import date, datetime, timedelta
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlmodel import Session, select
@@ -19,10 +21,30 @@ from app.services.ai.workout_chain import generate_workout_plan
 
 router = APIRouter()
 
+# Per-user daily rate limit for AI endpoints
+DAILY_AI_LIMIT = 5
+_usage: dict[tuple[uuid.UUID, date], int] = defaultdict(int)
+
 
 def _check_api_key():
     if not settings.openai_api_key:
         raise HTTPException(status_code=503, detail="OpenAI API key not configured")
+
+
+def _check_rate_limit(user_id: uuid.UUID):
+    key = (user_id, date.today())
+    if _usage[key] >= DAILY_AI_LIMIT:
+        raise HTTPException(
+            status_code=429,
+            detail=f"Daily AI limit reached ({DAILY_AI_LIMIT} requests/day). Try again tomorrow.",
+        )
+    _usage[key] += 1
+
+    # Clean up old entries to prevent memory leak
+    today = date.today()
+    stale = [k for k in _usage if k[1] < today]
+    for k in stale:
+        del _usage[k]
 
 
 @router.post("/generate-workout")
@@ -32,6 +54,7 @@ async def generate_workout_endpoint(
     session: Session = Depends(get_session),
 ):
     _check_api_key()
+    _check_rate_limit(user.id)
 
     exercises = session.exec(select(Exercise)).all()
     if not exercises:
@@ -79,6 +102,7 @@ async def generate_diet_endpoint(
     session: Session = Depends(get_session),
 ):
     _check_api_key()
+    _check_rate_limit(user.id)
     result = await generate_diet_plan(user, req)
     return result
 
@@ -90,6 +114,7 @@ async def analyze_progress_endpoint(
     session: Session = Depends(get_session),
 ):
     _check_api_key()
+    _check_rate_limit(user.id)
 
     cutoff = datetime.utcnow() - timedelta(weeks=req.weeks)
 

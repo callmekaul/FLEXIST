@@ -90,8 +90,13 @@ export default function LandingPage() {
         </section>
       </main>
 
-      <footer className="border-t px-6 py-4 text-center text-sm text-muted-foreground">
-        Flexist &copy; {new Date().getFullYear()}
+      <footer className="border-t px-6 py-4 text-center text-sm text-muted-foreground space-y-2">
+        <p>Flexist &copy; {new Date().getFullYear()}</p>
+        <p className="max-w-2xl mx-auto text-xs">
+          AI features are powered by OpenAI. When you use AI-generated workout plans, diet plans, or progress analysis,
+          your fitness data (weight, height, goals, workout history, and body measurements) is sent to OpenAI for processing.
+          AI usage is limited to 5 requests per user per day.
+        </p>
       </footer>
     </div>
   );

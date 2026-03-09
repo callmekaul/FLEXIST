@@ -189,6 +189,12 @@ export default function DashboardPage() {
             </CardContent>
           </Card>
         )}
+
+      <p className="text-xs text-muted-foreground text-center">
+        AI features are powered by OpenAI. Your fitness data is sent to OpenAI
+        when you generate plans or analyze progress. AI usage is limited to 5
+        requests per day.
+      </p>
     </div>
   );
 }

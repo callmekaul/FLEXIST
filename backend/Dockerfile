@@ -2,9 +2,11 @@ FROM python:3.12-slim
 
 WORKDIR /backend
 
+# Install dependencies (cached layer)
 COPY pyproject.toml .
 RUN pip install --no-cache-dir .
 
+# Copy source code
 COPY . .
 
 # Run Alembic migrations then start the server

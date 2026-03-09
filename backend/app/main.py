@@ -32,8 +32,6 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="Flexist API", version="0.1.0", lifespan=lifespan)
 
-app.add_middleware(LogMiddleware)
-
 cors_origins = ["http://localhost:3000"]
 if os.environ.get("FRONTEND_URL"):
     cors_origins.append(os.environ["FRONTEND_URL"])
@@ -45,6 +43,8 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+app.add_middleware(LogMiddleware)
 
 app.include_router(auth.router, prefix="/api/auth", tags=["auth"])
 app.include_router(users.router, prefix="/api/users", tags=["users"])

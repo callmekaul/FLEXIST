@@ -2,10 +2,9 @@ import logging
 import os
 from contextlib import asynccontextmanager
 
-from fastapi import Depends, FastAPI, Query, Request
+from fastapi import Depends, FastAPI, Query
 from fastapi.middleware.cors import CORSMiddleware
 from sqlmodel import Session, select
-from starlette.middleware.base import BaseHTTPMiddleware
 
 from app.database import create_db_and_tables, get_session
 from app.models.equipment import Equipment
@@ -14,27 +13,21 @@ from app.routers import auth, users, gyms, memberships, workouts, exercises, die
 logger = logging.getLogger("uvicorn.error")
 
 
-class LogMiddleware(BaseHTTPMiddleware):
-    async def dispatch(self, request: Request, call_next):
-        logger.warning(f"[REQ] {request.method} {request.url.path} from {request.headers.get('origin', 'no-origin')}")
-        response = await call_next(request)
-        logger.warning(f"[RES] {request.method} {request.url.path} -> {response.status_code}")
-        return response
-
-
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     create_db_and_tables()
     from app.seed import seed_all
     seed_all()
+    logger.info(f"CORS allowed origins: {cors_origins}")
     yield
 
 
 app = FastAPI(title="Flexist API", version="0.1.0", lifespan=lifespan)
 
 cors_origins = ["http://localhost:3000"]
-if os.environ.get("FRONTEND_URL"):
-    cors_origins.append(os.environ["FRONTEND_URL"])
+frontend_url = os.environ.get("FRONTEND_URL", "").rstrip("/")
+if frontend_url:
+    cors_origins.append(frontend_url)
 
 app.add_middleware(
     CORSMiddleware,
@@ -43,8 +36,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-app.add_middleware(LogMiddleware)
 
 app.include_router(auth.router, prefix="/api/auth", tags=["auth"])
 app.include_router(users.router, prefix="/api/users", tags=["users"])

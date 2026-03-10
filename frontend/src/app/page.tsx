@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import Link from "next/link";
 import { Dumbbell, Brain, Building2, Trophy } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -9,6 +10,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import api from "@/lib/api";
 
 const features = [
   {
@@ -38,6 +40,11 @@ const features = [
 ];
 
 export default function LandingPage() {
+  // Wake up the backend on Render (free tier sleeps after 15 min inactivity)
+  useEffect(() => {
+    api.get("/api/health").catch(() => {});
+  }, []);
+
   return (
     <div className="flex min-h-screen flex-col">
       <header className="flex items-center justify-between border-b px-6 py-4">
